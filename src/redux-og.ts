@@ -1,6 +1,9 @@
 import {v1 as uuid} from 'uuid';
 import {Todo} from './type';
-
+import {applyMiddleware, combineReducers, compose, createStore} from "@reduxjs/toolkit";
+import thunk from 'redux-thunk';
+import logger from 'redux-logger';
+import {composeWithDevTools} from "redux-devtools-extension";
 //constants
 
 const CREATE_TODO = 'CREATE_TODO';
@@ -68,13 +71,14 @@ export const deleteTodoActionCreator = ({id}: { id: string }): DeleteTodoActionT
 }
 
 interface SelectTodoActionType {
-    type:typeof SELECT_TODO;
-    payload:{id:string}
+    type: typeof SELECT_TODO;
+    payload: { id: string }
 }
-export const selectTodoActionCreator =({id}:{id:string}):SelectTodoActionType=>{
-    return{
-        type:SELECT_TODO,
-        payload:{
+
+export const selectTodoActionCreator = ({id}: { id: string }): SelectTodoActionType => {
+    return {
+        type: SELECT_TODO,
+        payload: {
             id
         }
     }
@@ -82,7 +86,7 @@ export const selectTodoActionCreator =({id}:{id:string}):SelectTodoActionType=>{
 
 
 //Reducers
-type TodoActionTypes = CreateTodoActionType|EditTodoActionType|ToggleTodoActionType|DeleteTodoActionType
+type TodoActionTypes = CreateTodoActionType | EditTodoActionType | ToggleTodoActionType | DeleteTodoActionType
 const todosInitialState: Todo[] = [
     {
         id: uuid(),
@@ -101,18 +105,92 @@ const todosInitialState: Todo[] = [
     }
 ];
 const todosReducer = (
-    state:Todo[] = todosInitialState,
-    {type,payload}:TodoActionTypes
-)=>{
-switch (type){
-    case CREATE_TODO:{
-        return [...state,payload];
+    state: Todo[] = todosInitialState,
+    action: TodoActionTypes
+) => {
+    switch (action.type) {
+        case CREATE_TODO: {
+            const {payload} = action
+            return [...state, payload];
+        }
+        case EDIT_TODO: {
+            const {payload} = action
+
+            return state.map(todo => todo.id === payload.id ? {...todo, desc: payload.desc} : todo)
+        }
+        case TOGGLE_TODO:{
+            const {payload} = action;
+            return state.map(todo=>todo.id===payload.id?{...todo,isComplete:payload.isComplete}:todo)
+        }
+        case DELETE_TODO:{
+            const {payload} = action;
+            return state.filter(todo=>todo.id!==payload.id)
+        }
+        default:
+            return state
     }
-    case EDIT_TODO:{
+}
+
+type SelectedTodoActionTypes = SelectTodoActionType;
+const selectedTodoReducer = (
+    state:string|null = null,
+    action:SelectedTodoActionTypes
+)=>{
+    switch(action.type){
+        case SELECT_TODO:{
+            const {payload} = action;
+            return payload.id;
+        }
+        default:{
+            return state
+        }
+    }
+}
+const counterReducer = (
+    state:number = 0,
+    action:TodoActionTypes
+)=>{
+    switch(action.type){
+        case CREATE_TODO:{
+            return state + 1
+        }
+        case EDIT_TODO:{
+            return state + 1
+        }
+        case TOGGLE_TODO:{
+            return state + 1
+        }case DELETE_TODO:{
+            return state + 1
+        }
+        default:{
+            return state
+        }
 
     }
 }
-}
+
+
+const reducers = combineReducers({
+    todos:todosReducer,
+    selectedTodo:selectedTodoReducer,
+    counter:counterReducer
+});
+
+//Store
+
+export default createStore(
+    reducers,
+composeWithDevTools(
+    applyMiddleware(thunk,logger)
+    )
+    );
+
+
+
+
+
+
+
 
 
 
