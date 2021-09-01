@@ -2,6 +2,9 @@ import {configureStore, createSlice, PayloadAction,} from '@reduxjs/toolkit';
 import {Todo} from "./type";
 import {v1 as uuid} from "uuid";
 import logger from "redux-logger";
+import { takeLatest } from "redux-saga/effects";
+import createSagaMiddleware from "redux-saga";
+
 const todosInitialState: Todo[] = [
     {
         id: uuid(),
@@ -37,11 +40,11 @@ const todosSlice = createSlice({
                 }//подготовка данных для редюсера что бы редюсер остался чистым
             })
         },
-        edit: (state, {payload}: PayloadAction<{ id: string; desc: string }>) => {
-            const todoToEdit = state.find(todo => todo.id === payload.id);
-            if (todoToEdit) {
-                todoToEdit.desc = payload.desc;
-            }
+        edit:function*(state, {payload}: PayloadAction<{ id: string; desc: string }>):any{
+                const todoToEdit = state.find(todo => todo.id === payload.id);
+                if (todoToEdit) {
+                    todoToEdit.desc = payload.desc;
+                }
         },
         toggle: (state, {payload}: PayloadAction<{ id: string; isComplete: boolean }>) => {
             const todoToEdit = state.find(todo => todo.id === payload.id);
@@ -80,6 +83,11 @@ const counterSlice = createSlice({
     }
 })
 
+function* watcherSaga() {
+    yield takeLatest(todosSlice.actions.create.type, todosSlice.caseReducers.edit.call);
+}
+
+
 export const {
     create: createTodoActionCreator,
     edit: editTodoActionCreator,
@@ -96,7 +104,12 @@ const reducer = {
     selectedTodo: selectedTodoSlice.reducer,
     counter: counterSlice.reducer,
 }
+const sagaMiddleware = createSagaMiddleware();
 
 export default configureStore({
     reducer,
+    middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware({
+            thunk: false,
+        }).concat(sagaMiddleware).concat(logger),
 })
