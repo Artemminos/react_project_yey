@@ -2,7 +2,7 @@ import {configureStore, createSlice, PayloadAction,} from '@reduxjs/toolkit';
 import {Todo} from "./type";
 import {v1 as uuid} from "uuid";
 import logger from "redux-logger";
-import { takeLatest } from "redux-saga/effects";
+import {takeLatest,put} from "redux-saga/effects";
 import createSagaMiddleware from "redux-saga";
 
 const todosInitialState: Todo[] = [
@@ -38,13 +38,14 @@ const todosSlice = createSlice({
                     desc,
                     isComplete: false
                 }//подготовка данных для редюсера что бы редюсер остался чистым
-            })
+            }),
+
         },
-        edit:function*(state, {payload}: PayloadAction<{ id: string; desc: string }>):any{
-                const todoToEdit = state.find(todo => todo.id === payload.id);
-                if (todoToEdit) {
-                    todoToEdit.desc = payload.desc;
-                }
+        edit: (state, {payload}: PayloadAction<{ id: string; desc: string }>) => {
+            const todoToEdit = state.find(todo => todo.id === payload.id);
+            if (todoToEdit) {
+                todoToEdit.desc = payload.desc;
+            }
         },
         toggle: (state, {payload}: PayloadAction<{ id: string; isComplete: boolean }>) => {
             const todoToEdit = state.find(todo => todo.id === payload.id);
@@ -57,7 +58,7 @@ const todosSlice = createSlice({
             console.log(state)
             const todoToEdit = state.find(todo => todo.id === payload.id);
             if (todoToEdit) {
-              return   state.filter((e) => e.id !== payload.id)
+                return state.filter((e) => e.id !== payload.id)
             }
         }
     }
@@ -83,9 +84,23 @@ const counterSlice = createSlice({
     }
 })
 
-function* watcherSaga() {
-    yield takeLatest(todosSlice.actions.create.type, todosSlice.caseReducers.edit.call);
+
+
+export function* handleGetUser({payload}:any) {
+    try {
+        yield put(todosSlice.actions.edit({id:payload.id,desc:'yoyo'}));
+    } catch (error) {
+        console.log(error);
+    }
 }
+
+
+function* watcherSaga() {
+    yield takeLatest(todosSlice.actions.toggle.type, handleGetUser);
+}
+
+
+
 
 
 export const {
@@ -113,3 +128,4 @@ export default configureStore({
             thunk: false,
         }).concat(sagaMiddleware).concat(logger),
 })
+sagaMiddleware.run(watcherSaga);

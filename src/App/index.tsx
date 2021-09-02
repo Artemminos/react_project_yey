@@ -1,17 +1,11 @@
 import React, {ChangeEvent, FormEvent, useEffect, useRef, useState} from "react";
-/*import {
-    createTodoActionCreator,
-    editTodoActionCreator,
-    selectTodoActionCreator,
-    toggleTodoActionCreator,
-    deleteTodoActionCreator
-} from '../redux-og';*/
+
 import {
     createTodoActionCreator,
     editTodoActionCreator,
     selectTodoActionCreator,
     toggleTodoActionCreator,
-    deleteTodoActionCreator
+    deleteTodoActionCreator,
 } from '../redux-toolkit';
 import {State} from "../type";
 import "./App.css";
@@ -91,6 +85,7 @@ const App = function () {
 
     };
 
+
     const handleDelete = (): void => {
         if (!selectedTodoId) return;
 
@@ -99,6 +94,7 @@ const App = function () {
 
     return (
         <div className="App">
+
             <div className="App__counter">Todos Updated Count: {editedCount}</div>
             <div className="App__header">
                 <h1>Todo: Redux vs RTK Edition</h1>
